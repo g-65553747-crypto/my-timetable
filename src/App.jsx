@@ -25,8 +25,8 @@ const COLORS = [
   { name: 'Rose', bg: 'bg-rose-100', border: 'border-rose-200', text: 'text-rose-700' },
 ];
 
-const AVAILABLE_SUBJECTS = ['MT', 'BM'];
-const AVAILABLE_CLASSES = ['2H', '4H', '5H'];
+const AVAILABLE_SUBJECTS = ['MT', 'BM', 'WP'];
+const AVAILABLE_CLASSES = ['', '2H', '4H', '5H'];
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const START_TIME = "07:40";
 const SCHOOL_END = "13:10";
@@ -178,50 +178,52 @@ const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onR
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center mb-10">
-        <button 
-          onClick={() => onNavigate('view')}
-          className="flex items-center gap-2 text-slate-900 font-black text-sm hover:-translate-x-1 transition-transform group"
-        >
-          <ChevronLeft size={20} className="group-hover:text-indigo-500" />
-          BACK TO DASHBOARD
-        </button>
-        
-        <button 
-          onClick={onSave}
-          className="bg-slate-900 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all"
-        >
-          {isSaving ? <Check size={18} className="text-green-400" /> : <Save size={18} />}
-          <span>{isSaving ? 'Saved!' : 'Save Changes'}</span>
-        </button>
-      </div>
+      <div className="sticky top-0 z-40 bg-[#f8fafc]/95 backdrop-blur-sm pt-2 pb-6 -mt-2">
+        <div className="flex justify-between items-center mb-6">
+          <button 
+            onClick={() => onNavigate('view')}
+            className="flex items-center gap-2 text-slate-900 font-black text-sm hover:-translate-x-1 transition-transform group"
+          >
+            <ChevronLeft size={20} className="group-hover:text-indigo-500" />
+            BACK TO DASHBOARD
+          </button>
+          
+          <button 
+            onClick={onSave}
+            className="bg-slate-900 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all"
+          >
+            {isSaving ? <Check size={18} className="text-green-400" /> : <Save size={18} />}
+            <span>{isSaving ? 'Saved!' : 'Save Changes'}</span>
+          </button>
+        </div>
 
-      <div className="mb-12">
-        <div className="flex justify-between items-end mb-8">
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Configuration</h1>
-          <div className="text-right">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject: MT, BM | Classes: 2H, 4H, 5H</span>
+        <div className="mb-2">
+          <div className="flex justify-between items-end mb-4">
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Configuration</h1>
+            <div className="text-right">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject: MT, BM | Classes: 2H, 4H, 5H</span>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 p-2 bg-slate-100 rounded-[2rem] shadow-inner">
+            {DAYS.map(day => (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`flex-1 py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                  selectedDay === day 
+                    ? 'bg-white text-indigo-600 shadow-xl scale-100' 
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                }`}
+              >
+                {day}
+              </button>
+            ))}
           </div>
         </div>
-        
-        <div className="flex flex-wrap gap-2 p-2 bg-slate-100 rounded-[2rem] shadow-inner">
-          {DAYS.map(day => (
-            <button
-              key={day}
-              onClick={() => setSelectedDay(day)}
-              className={`flex-1 py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
-                selectedDay === day 
-                  ? 'bg-white text-indigo-600 shadow-xl scale-100' 
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 mt-4">
         {timeSlots.filter(s => !s.isRecess).map((slot) => {
           const entries = timetableData[`${selectedDay}-${slot.id}`] || [];
           return (
@@ -261,9 +263,15 @@ const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onR
                             onChange={(e) => onUpdate(selectedDay, slot.id, entry.id, 'subject', e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all border-b-4 border-b-slate-200 focus:border-indigo-500 appearance-none"
                           >
-                            {AVAILABLE_SUBJECTS.map(s => (
-                              <option key={s} value={s}>{s === 'MT' ? 'Mathematics (MT)' : 'Bahasa Melayu (BM)'}</option>
-                            ))}
+                            {AVAILABLE_SUBJECTS.map(s => {
+                              let label = s;
+                              if (s === 'MT') label = 'Mathematics (MT)';
+                              else if (s === 'BM') label = 'Bahasa Melayu (BM)';
+                              else if (s === 'WP') label = 'WP';
+                              return (
+                                <option key={s} value={s}>{label}</option>
+                              );
+                            })}
                           </select>
                         </div>
                         <div className="space-y-2">
@@ -274,7 +282,7 @@ const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onR
                             className="w-full bg-white border border-slate-200 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all border-b-4 border-b-slate-200 focus:border-indigo-500 appearance-none"
                           >
                             {AVAILABLE_CLASSES.map(c => (
-                              <option key={c} value={c}>Class {c}</option>
+                              <option key={c} value={c}>{c ? `Class ${c}` : 'None'}</option>
                             ))}
                           </select>
                         </div>
