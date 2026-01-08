@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Calendar, Plus, Trash2, Clock, Check, X, Palette, ChevronLeft, BarChart3, TrendingUp } from 'lucide-react';
+import { Settings, Calendar, Plus, Trash2, Clock, Check, X, Palette, ChevronLeft, BarChart3, TrendingUp, Save, Printer, Download } from 'lucide-react';
 
 // --- CONSTANTS ---
 const COLORS = [
@@ -33,9 +33,9 @@ const SCHOOL_END = "13:10";
 
 // --- SUB-COMPONENTS ---
 
-const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
+const ViewPage = ({ timetableData, onNavigate, timeSlots, stats, onSave, onExport, isSaving }) => (
   <div className="p-4 md:p-8 max-w-[100vw] mx-auto pb-32">
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 px-4">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 px-4 print:hidden">
       <div>
         <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-2">My Schedule</h1>
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-200 w-fit shadow-sm">
@@ -43,28 +43,53 @@ const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
           <span className="text-sm font-bold text-slate-600 uppercase tracking-widest">{START_TIME} — {SCHOOL_END}</span>
         </div>
       </div>
-      <button 
-        onClick={() => onNavigate('manage')}
-        className="group relative bg-slate-900 text-white px-8 py-4 rounded-2xl flex items-center gap-3 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 overflow-hidden"
-      >
-        <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
-        <span className="font-black text-lg">Edit Timetable</span>
-      </button>
+      
+      <div className="flex gap-3">
+        <button 
+          onClick={onSave}
+          className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-6 py-4 rounded-2xl flex items-center gap-2 font-bold shadow-sm transition-all active:scale-95"
+        >
+          {isSaving ? <Check size={20} className="text-green-500" /> : <Save size={20} />}
+          <span>{isSaving ? 'Saved!' : 'Save'}</span>
+        </button>
+        
+        <button 
+          onClick={onExport}
+          className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-6 py-4 rounded-2xl flex items-center gap-2 font-bold shadow-sm transition-all active:scale-95"
+        >
+          <Printer size={20} />
+          <span>Export PDF</span>
+        </button>
+
+        <button 
+          onClick={() => onNavigate('manage')}
+          className="group relative bg-slate-900 text-white px-8 py-4 rounded-2xl flex items-center gap-3 shadow-2xl hover:bg-slate-800 transition-all active:scale-95 overflow-hidden"
+        >
+          <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
+          <span className="font-black text-lg">Edit</span>
+        </button>
+      </div>
     </div>
 
-    {/* Stats Summary Section */}
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-4 mb-8">
-      <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-xl shadow-slate-200">
+    {/* Header for Print View Only */}
+    <div className="hidden print:block mb-8 text-center">
+      <h1 className="text-3xl font-black text-slate-900 mb-2">Weekly Class Schedule</h1>
+      <p className="text-slate-500">Generated on {new Date().toLocaleDateString()}</p>
+    </div>
+
+    {/* Stats Summary Section - Hidden on Print to save space, or keep if desired. Keeping it for now. */}
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-4 mb-8 print:mb-4">
+      <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-xl shadow-slate-200 print:bg-slate-100 print:text-slate-900 print:border print:border-slate-300">
         <div className="flex items-center gap-3 mb-2 opacity-80">
           <BarChart3 size={20} />
           <span className="text-xs font-black uppercase tracking-widest">Total Periods</span>
         </div>
         <div className="text-5xl font-black tracking-tight">{stats.totalPeriods}</div>
-        <div className="text-xs font-medium text-slate-400 mt-2">periods per week</div>
+        <div className="text-xs font-medium text-slate-400 mt-2 print:text-slate-600">periods per week</div>
       </div>
 
       {AVAILABLE_CLASSES.map((cls, idx) => (
-        <div key={cls} className="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-indigo-200 transition-colors">
+        <div key={cls} className="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -72,9 +97,6 @@ const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Class Load</span>
               </div>
               <div className="text-3xl font-black text-slate-800">Class {cls}</div>
-            </div>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-blue-50 text-blue-600' : idx === 1 ? 'bg-purple-50 text-purple-600' : 'bg-emerald-50 text-emerald-600'}`}>
-              {cls}
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-slate-50 flex items-baseline gap-2">
@@ -85,19 +107,19 @@ const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
       ))}
     </div>
 
-    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden mx-4">
+    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_50px_rgba(0,0,0,0.05)] overflow-hidden mx-4 print:shadow-none print:border-0 print:mx-0">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse min-w-max">
           <thead>
-            <tr className="bg-slate-50/50">
-              <th className="p-6 text-left border-b border-slate-100 w-40 sticky left-0 bg-slate-50 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Day</span>
+            <tr className="bg-slate-50/50 print:bg-gray-100">
+              <th className="p-6 text-left border-b border-slate-100 w-40 sticky left-0 bg-slate-50 z-30 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:shadow-none print:bg-transparent">
+                <span className="text-sm font-black text-slate-500 uppercase tracking-[0.2em]">Day</span>
               </th>
               {timeSlots.map(slot => (
                 <th key={slot.id} className={`p-4 text-center border-b border-slate-100 min-w-[160px] ${slot.isRecess ? 'bg-orange-50/30' : ''}`}>
                   <div className="flex flex-col items-center gap-1">
-                    <span className={`text-sm font-black uppercase tracking-wider ${slot.isRecess ? 'text-orange-500' : 'text-slate-800'}`}>{slot.label}</span>
-                    <span className={`text-[10px] font-bold ${slot.isRecess ? 'text-orange-300' : 'text-indigo-400'}`}>{slot.start} - {slot.end}</span>
+                    <span className={`text-base font-black uppercase tracking-wider ${slot.isRecess ? 'text-orange-600' : 'text-slate-900'}`}>{slot.label}</span>
+                    <span className={`text-xs font-bold ${slot.isRecess ? 'text-orange-400' : 'text-indigo-500'}`}>{slot.start} - {slot.end}</span>
                   </div>
                 </th>
               ))}
@@ -105,39 +127,37 @@ const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
           </thead>
           <tbody>
             {DAYS.map(day => (
-              <tr key={day} className="group hover:bg-slate-50/30 transition-colors">
-                <td className="p-6 border-b border-slate-50 sticky left-0 z-20 bg-white group-hover:bg-slate-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-                  <div className="font-black text-slate-900 text-sm uppercase tracking-[0.15em]">{day}</div>
+              <tr key={day} className="group hover:bg-slate-50/30 transition-colors print:hover:bg-transparent">
+                <td className="p-6 border-b border-slate-50 sticky left-0 z-20 bg-white group-hover:bg-slate-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:shadow-none print:bg-transparent print:border-r print:border-slate-200">
+                  <div className="font-black text-slate-900 text-lg uppercase tracking-[0.15em]">{day}</div>
                 </td>
                 {timeSlots.map((slot) => {
                   if (slot.isRecess) {
                     return (
-                      <td key={`${day}-recess`} className="p-2 border-b border-slate-50 bg-orange-50/10 text-center relative">
-                        <div className="h-full w-full flex items-center justify-center opacity-20">
-                          <div className="w-1.5 h-16 rounded-full bg-orange-300"></div>
+                      <td key={`${day}-recess`} className="p-2 border-b border-slate-50 bg-orange-50/10 text-center relative print:bg-orange-50/30">
+                        <div className="h-full w-full flex items-center justify-center opacity-20 print:opacity-40">
+                          <div className="w-2 h-16 rounded-full bg-orange-300"></div>
                         </div>
                       </td>
                     );
                   }
                   const entries = timetableData[`${day}-${slot.id}`] || [];
                   return (
-                    <td key={`${day}-${slot.id}`} className="p-3 border-b border-slate-50 align-top">
-                      <div className="flex flex-col gap-2 min-h-[100px]">
+                    <td key={`${day}-${slot.id}`} className="p-3 border-b border-slate-50 align-middle print:p-2">
+                      <div className="flex flex-col justify-center gap-2 min-h-[100px]">
                         {entries.length > 0 ? (
                           entries.map((entry) => (
                             <div 
                               key={entry.id} 
-                              className={`group/item p-3 rounded-xl border ${entry.color || 'bg-slate-100 border-slate-200'} shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5`}
+                              className={`group/item py-4 px-2 rounded-xl border ${entry.color || 'bg-slate-100 border-slate-200'} shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 print:shadow-none print:border-2 flex items-center justify-center gap-3`}
                             >
-                              <div className="font-black text-xs text-slate-800 leading-tight mb-1">{entry.subject}</div>
-                              <div className="text-[9px] font-black uppercase text-slate-500 tracking-wider bg-white/50 px-1.5 py-0.5 rounded w-fit">
-                                {entry.class}
-                              </div>
+                              <span className="font-black text-3xl text-slate-900 leading-none">{entry.subject}</span>
+                              <span className="font-bold text-2xl text-slate-700 leading-none">{entry.class}</span>
                             </div>
                           ))
                         ) : (
-                          <div className="flex-grow rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">Free</span>
+                          <div className="flex-grow rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                            <span className="text-sm font-black text-slate-200 uppercase tracking-widest">Free</span>
                           </div>
                         )}
                       </div>
@@ -153,18 +173,28 @@ const ViewPage = ({ timetableData, onNavigate, timeSlots, stats }) => (
   </div>
 );
 
-const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onRemove }) => {
+const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onRemove, onSave, isSaving }) => {
   const [selectedDay, setSelectedDay] = useState('Monday');
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto pb-32 animate-in slide-in-from-bottom-4 duration-500">
-      <button 
-        onClick={() => onNavigate('view')}
-        className="flex items-center gap-2 text-slate-900 font-black text-sm mb-10 hover:-translate-x-1 transition-transform group"
-      >
-        <ChevronLeft size={20} className="group-hover:text-indigo-500" />
-        BACK TO DASHBOARD
-      </button>
+      <div className="flex justify-between items-center mb-10">
+        <button 
+          onClick={() => onNavigate('view')}
+          className="flex items-center gap-2 text-slate-900 font-black text-sm hover:-translate-x-1 transition-transform group"
+        >
+          <ChevronLeft size={20} className="group-hover:text-indigo-500" />
+          BACK TO DASHBOARD
+        </button>
+        
+        <button 
+          onClick={onSave}
+          className="bg-slate-900 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all"
+        >
+          {isSaving ? <Check size={18} className="text-green-400" /> : <Save size={18} />}
+          <span>{isSaving ? 'Saved!' : 'Save Changes'}</span>
+        </button>
+      </div>
 
       <div className="mb-12">
         <div className="flex justify-between items-end mb-8">
@@ -292,6 +322,7 @@ const ManagePage = ({ timetableData, onNavigate, timeSlots, onAdd, onUpdate, onR
 // --- MAIN COMPONENT ---
 const App = () => {
   const [currentPage, setCurrentPage] = useState('view');
+  const [isSaving, setIsSaving] = useState(false);
   const [timetableData, setTimetableData] = useState(() => {
     const saved = localStorage.getItem('school_timetable_v5');
     return saved ? JSON.parse(saved) : {};
@@ -303,6 +334,16 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('school_timetable_v5', JSON.stringify(timetableData));
   }, [timetableData]);
+
+  const handleManualSave = () => {
+    localStorage.setItem('school_timetable_v5', JSON.stringify(timetableData));
+    setIsSaving(true);
+    setTimeout(() => setIsSaving(false), 2000);
+  };
+
+  const handleExport = () => {
+    window.print();
+  };
 
   const formatTime = (totalMinutes) => {
     const h = Math.floor(totalMinutes / 60);
@@ -395,7 +436,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-indigo-100">
       {/* Mobile Nav */}
-      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] px-10 py-5 md:hidden z-50 flex gap-16 shadow-2xl">
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] px-10 py-5 md:hidden z-50 flex gap-16 shadow-2xl print:hidden">
         <button 
           onClick={() => setCurrentPage('view')}
           className={`flex flex-col items-center gap-2 transition-all ${currentPage === 'view' ? 'text-indigo-400 scale-110' : 'text-slate-500 opacity-60'}`}
@@ -418,6 +459,9 @@ const App = () => {
           onNavigate={setCurrentPage}
           timeSlots={timeSlots}
           stats={stats}
+          onSave={handleManualSave}
+          onExport={handleExport}
+          isSaving={isSaving}
         />
       ) : (
         <ManagePage 
@@ -427,6 +471,8 @@ const App = () => {
           onAdd={handleAddEntry}
           onUpdate={handleUpdateEntry}
           onRemove={handleRemoveEntry}
+          onSave={handleManualSave}
+          isSaving={isSaving}
         />
       )}
     </div>
